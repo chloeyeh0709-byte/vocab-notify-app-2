@@ -413,7 +413,7 @@ html, body {
       <button class="gold-btn" id="notify-btn" onclick="requestPush()">啟用</button>
     </div>
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">總單字</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="showAllWords()"><div class="stat-num" id="stat-total">0</div><div class="stat-label">總單字</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-due">0</div><div class="stat-label">待複習</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-done">0</div><div class="stat-label">已完成</div></div>
     </div>
@@ -445,6 +445,21 @@ html, body {
     <button class="icon-btn" onclick="openFolderMenu()">⋯</button>
   </div>
   <div class="folder-view-body" id="folder-view-body">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<!-- ALL WORDS -->
+<div class="screen" id="all-words">
+  <div class="topbar">
+    <button class="icon-btn" onclick="showScreen('home')">←</button>
+    <div>
+      <div class="topbar-title">所有單字</div>
+      <div class="topbar-sub" id="aw-sub"></div>
+    </div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="folder-view-body" id="all-words-body">
     <!-- injected by JS -->
   </div>
 </div>
@@ -963,6 +978,41 @@ function renderFolderView(fid) {
   document.getElementById('folder-view-body').innerHTML = html;
 }
 
+function showAllWords() {
+  renderAllWords();
+  showScreen('all-words');
+}
+
+function renderAllWords() {
+  const now = Date.now();
+  const words   = state.words;
+  const due     = words.filter(w => w.stage < INTERVALS_MS.length && w.nextReview && w.nextReview <= now);
+  const pending = words.filter(w => w.stage < INTERVALS_MS.length && (!w.nextReview || w.nextReview > now));
+  const done    = words.filter(w => w.stage >= INTERVALS_MS.length);
+  document.getElementById('aw-sub').textContent = `共 ${words.length} 個單字`;
+
+  let html = '';
+  if (due.length > 0) {
+    html += `<div class="fv-section-title">待複習</div><div class="word-list">` +
+      due.map(w => wordItemHTML(w,'due')).join('') + `</div>`;
+  }
+  if (pending.length > 0) {
+    html += `<div class="fv-section-title">複習中</div><div class="word-list">` +
+      pending.map(w => wordItemHTML(w,'pending')).join('') + `</div>`;
+  }
+  if (done.length > 0) {
+    html += `<div class="fv-section-title">已完成</div><div class="word-list">` +
+      done.map(w => wordItemHTML(w,'done')).join('') + `</div>`;
+  }
+  if (words.length === 0) {
+    html = `<div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <div class="empty-text">還沒有任何單字</div>
+    </div>`;
+  }
+  document.getElementById('all-words-body').innerHTML = html;
+}
+
 function wordItemHTML(w, type) {
   const badge = type === 'due'
     ? `<span class="word-due-badge">待複習</span>`
@@ -1418,6 +1468,7 @@ async function deleteWord(wid) {
   renderDrawer();
   renderHome();
   if (state.viewingFolderId) renderFolderView(state.viewingFolderId);
+  if (document.getElementById('all-words').classList.contains('active')) renderAllWords();
   showToast('單字已刪除');
 }
 
