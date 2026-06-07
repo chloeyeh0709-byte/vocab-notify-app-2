@@ -1,0 +1,9 @@
+project_id = "wordvault"
+
+[functions.send-due-notifications]
+# This function is invoked by a pg_cron job (server-to-server with our own
+# CRON_SECRET header), never by a logged-in user — so the platform's normal
+# "is there a valid Supabase user JWT?" gate must be turned off here. The
+# function checks CRON_SECRET itself instead. If your CLI version ignores this
+# file, pass `--no-verify-jwt` explicitly when deploying (see README).
+verify_jwt = false

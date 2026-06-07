@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WordVault">
+<meta name="theme-color" content="#1a1510">
+<title>WordVault</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  /* 主畫面：淺色系 */
+  --bg:      #f5f0e8;
+  --bg2:     #ede8de;
+  --bg3:     #ffffff;
+  --bg4:     #e8e2d8;
+  --border:  #ddd8ce;
+  --border2: #ccc6ba;
+  --text:    #1a1510;
+  --text2:   #5a5040;
+  --text3:   #9a9080;
+  /* 金色（主畫面與 Drawer 共用） */
+  --gold:     #b8923a;
+  --gold2:    #d4a84e;
+  --gold-dim: #8a6e2e;
+  /* Drawer 專用深色 */
+  --drawer-bg:    #1c1915;
+  --drawer-bg2:   #242018;
+  --drawer-bg3:   #2e2920;
+  --drawer-border:#3d3428;
+  --drawer-text:  #e8e0d0;
+  --drawer-text2: #a89880;
+  --drawer-text3: #6a5c48;
+  /* 其他 */
+  --green: #3d7a52;
+  --red:   #8b3a3a;
+  --radius: 14px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  height:100%; background:var(--bg); color:var(--text);
+  font-family:'Noto Sans TC', sans-serif; font-weight:300;
+  overflow:hidden; user-select:none;
+}
+
+/* ── SCREENS ── */
+.screen { position:fixed; inset:0; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .25s; }
+.screen.active { opacity:1; pointer-events:all; }
+
+/* ── TOP BAR ── */
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: calc(var(--safe-top) + 14px) 20px 14px;
+  background:var(--bg); border-bottom:1px solid var(--border);
+  flex-shrink:0; position:relative; z-index:10;
+}
+.topbar-title { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:400; color:var(--gold); letter-spacing:.05em; }
+.topbar-sub { font-size:.65rem; color:var(--text3); letter-spacing:.12em; text-transform:uppercase; }
+.icon-btn { width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:none; border:none; color:var(--text2); cursor:pointer; font-size:1.1rem; transition:background .15s; }
+.icon-btn:active { background:var(--bg2); }
+
+/* ── HOME ── */
+#home { background:var(--bg); }
+.home-body { flex:1; overflow-y:auto; padding:24px 20px calc(var(--safe-bot) + 24px); }
+.home-hero { text-align:center; padding:28px 0 32px; }
+.home-logo { font-family:'Cormorant Garamond',serif; font-size:3.2rem; font-weight:300; font-style:italic; color:var(--text); letter-spacing:.02em; line-height:1; }
+.home-tagline { font-size:.65rem; color:var(--text3); letter-spacing:.25em; text-transform:uppercase; margin-top:8px; }
+
+.notify-card {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius);
+  padding:16px 18px; display:flex; align-items:center; gap:14px; margin-bottom:24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.notify-icon { font-size:1.4rem; flex-shrink:0; }
+.notify-text { flex:1; }
+.notify-text strong { font-size:.9rem; font-weight:500; color:var(--text); display:block; margin-bottom:2px; }
+.notify-text span { font-size:.75rem; color:var(--text3); }
+.gold-btn {
+  background:var(--gold); color:#fff; border:none; border-radius:9px;
+  padding:9px 18px; font-size:.8rem; font-weight:500; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; white-space:nowrap; flex-shrink:0;
+  transition:background .15s, transform .1s;
+}
+.gold-btn:active { background:var(--gold2); transform:scale(.96); }
+.gold-btn:disabled { background:var(--bg2); color:var(--text3); cursor:default; }
+
+.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:28px; }
+.stat-card { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:16px 10px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.stat-num { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; color:var(--gold); line-height:1; }
+.stat-label { font-size:.68rem; color:var(--text3); margin-top:5px; letter-spacing:.05em; }
+
+.section-title { font-size:.7rem; color:var(--text3); letter-spacing:.15em; text-transform:uppercase; margin-bottom:12px; }
+.due-list { display:flex; flex-direction:column; gap:8px; }
+.due-item {
+  background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+  transition:background .15s; box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.due-item:active { background:var(--bg2); }
+.due-word { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-style:italic; color:var(--text); }
+.due-stage { font-size:.7rem; color:var(--text3); margin-top:2px; }
+.due-arrow { color:var(--gold-dim); font-size:.9rem; }
+.empty-state { text-align:center; padding:48px 20px; }
+.empty-icon { font-size:2.5rem; margin-bottom:14px; opacity:.4; }
+.empty-text { font-size:.85rem; color:var(--text3); }
+
+/* ── DRAWER ── */
+#drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; opacity:0; pointer-events:none; transition:opacity .25s; }
+#drawer-overlay.open { opacity:1; pointer-events:all; }
+#drawer {
+  position:fixed; top:0; left:0; bottom:0; width:78vw; max-width:320px;
+  background:var(--drawer-bg); z-index:101; transform:translateX(-100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column; padding-top:var(--safe-top);
+}
+#drawer.open { transform:translateX(0); }
+.drawer-header { padding:18px 20px 14px; border-bottom:1px solid var(--drawer-border); display:flex; align-items:center; justify-content:space-between; }
+.drawer-logo { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:300; color:var(--gold); letter-spacing:.05em; }
+.drawer-header .icon-btn { color:var(--drawer-text2); }
+.drawer-header .icon-btn:active { background:var(--drawer-bg2); }
+.drawer-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:14px 16px; border-bottom:1px solid var(--drawer-border); }
+.drawer-act-btn {
+  background:var(--drawer-bg2); border:1px solid var(--drawer-border); border-radius:10px;
+  padding:10px 8px; font-size:.78rem; color:var(--drawer-text2); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  font-family:'Noto Sans TC',sans-serif; transition:background .15s;
+}
+.drawer-act-btn:active { background:var(--drawer-bg3); }
+.drawer-act-btn.gold { background:rgba(184,146,58,.15); border-color:var(--gold-dim); color:var(--gold); }
+
+.folder-tree { flex:1; overflow-y:auto; padding:8px 0; }
+.folder-item { display:flex; align-items:center; padding:11px 16px; cursor:pointer; transition:background .12s; position:relative; }
+.folder-item:active { background:var(--drawer-bg2); }
+.folder-item.selected { background:rgba(184,146,58,.1); }
+.folder-item.selected::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--gold); border-radius:0 2px 2px 0; }
+.folder-toggle { width:28px; height:36px; display:flex; align-items:center; justify-content:center; color:var(--drawer-text3); font-size:.6rem; margin-right:2px; flex-shrink:0; transition:transform .2s; cursor:pointer; }
+.folder-toggle.expanded { transform:rotate(90deg); }
+.folder-toggle.leaf { pointer-events:none; opacity:0; }
+.folder-icon { font-size:1rem; margin-right:8px; flex-shrink:0; }
+.folder-name { flex:1; font-size:.87rem; color:var(--drawer-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.folder-count { font-size:.7rem; color:var(--drawer-text3); margin-left:6px; }
+.folder-children {
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .25s ease;
+}
+.folder-children.open {
+  max-height:2000px; /* 夠大就好，不會被截斷 */
+}
+
+/* ── ADD WORD ── */
+#add-word { background:var(--bg); }
+.add-body { flex:1; overflow-y:auto; padding:24px 20px calc(var(--safe-bot) + 24px); }
+.field-group { margin-bottom:20px; }
+.field-label { font-size:.72rem; color:var(--text3); letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px; display:block; }
+.field-input {
+  width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:10px;
+  padding:13px 16px; font-size:1rem; color:var(--text); outline:none;
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  transition:border-color .15s;
+}
+.field-input:focus { border-color:var(--gold); }
+.field-input::placeholder { color:var(--text3); font-style:italic; }
+.cn-row { display:flex; align-items:center; gap:10px; }
+.cn-input { flex:1; }
+.cn-status { font-size:.75rem; padding:4px 0; height:20px; color:var(--text3); }
+.cn-status.loading { color:var(--gold-dim); }
+.cn-status.done { color:var(--green); }
+
+.folder-select-btn {
+  width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:10px;
+  padding:13px 16px; font-size:.87rem; color:var(--text2); text-align:left; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; display:flex; align-items:center; gap:8px;
+  transition:border-color .15s;
+}
+.folder-select-btn:active { background:var(--bg2); }
+
+.interval-preview { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:24px; }
+.interval-preview-title { font-size:.72rem; color:var(--text3); letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px; }
+.interval-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.interval-chip { background:var(--bg2); border:1px solid var(--border2); border-radius:6px; padding:4px 10px; font-size:.72rem; color:var(--text3); }
+.interval-chip.active { background:rgba(184,146,58,.12); border-color:var(--gold-dim); color:var(--gold); }
+
+.add-submit { width:100%; }
+
+/* ── REVIEW ── */
+#review { background:var(--bg); }
+.review-body { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 24px calc(var(--safe-bot) + 24px); }
+.card-wrap { width:100%; max-width:380px; perspective:1000px; margin-bottom:32px; cursor:pointer; }
+.card-inner { position:relative; width:100%; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,0,.2,1); }
+.card-inner.flipped { transform:rotateY(180deg); }
+.card-face {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:20px;
+  padding:48px 28px; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+}
+.card-back { position:absolute; inset:0; transform:rotateY(180deg); border-radius:20px; }
+.card-hint { font-size:.68rem; color:var(--text3); letter-spacing:.15em; text-transform:uppercase; margin-bottom:16px; }
+.card-english { font-family:'Cormorant Garamond',serif; font-size:2.4rem; font-style:italic; color:var(--text); text-align:center; line-height:1.2; }
+.card-chinese-big { font-size:2rem; color:var(--text); text-align:center; margin-bottom:8px; font-weight:400; }
+.card-english-small { font-family:'Cormorant Garamond',serif; font-size:1rem; font-style:italic; color:var(--text3); text-align:center; }
+.card-tap-hint { font-size:.7rem; color:var(--text3); margin-top:20px; opacity:.6; }
+
+.stage-badge { font-size:.7rem; color:var(--text3); margin-bottom:12px; text-align:center; }
+.stage-badge span { color:var(--gold); }
+
+.btn-row { display:flex; gap:10px; width:100%; max-width:380px; }
+.review-btn {
+  flex:1; padding:15px 10px; border:none; border-radius:12px; font-size:.85rem;
+  font-family:'Noto Sans TC',sans-serif; font-weight:400; cursor:pointer;
+  transition:transform .1s, opacity .15s;
+}
+.review-btn:active { transform:scale(.95); }
+.btn-forget { background:rgba(139,58,58,.1); color:#8b3a3a; border:1px solid rgba(139,58,58,.25); }
+.btn-vague  { background:rgba(184,146,58,.1); color:#8a6e2e; border:1px solid rgba(184,146,58,.3); }
+.btn-know   { background:rgba(61,122,82,.1);  color:#2d6640; border:1px solid rgba(61,122,82,.25); }
+
+.review-progress { font-size:.75rem; color:var(--text3); margin-bottom:20px; }
+.review-done { text-align:center; padding:40px 24px; }
+.review-done-icon { font-size:3rem; margin-bottom:16px; }
+.review-done-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-style:italic; color:var(--gold); margin-bottom:8px; }
+.review-done-sub { font-size:.82rem; color:var(--text3); }
+
+/* ── FOLDER PICKER ── */
+#folder-picker-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
+  display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#folder-picker-overlay.open { opacity:1; pointer-events:all; }
+#folder-picker {
+  background:var(--bg3); border-radius:20px 20px 0 0; width:100%;
+  padding-bottom:calc(var(--safe-bot) + 16px);
+  transform:translateY(100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+  max-height:75vh; display:flex; flex-direction:column;
+  box-shadow:0 -4px 24px rgba(0,0,0,.12);
+}
+#folder-picker-overlay.open #folder-picker { transform:translateY(0); }
+.picker-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.picker-title { font-size:.9rem; color:var(--text); font-weight:500; }
+.picker-new-btn { font-size:.78rem; color:var(--gold); background:none; border:none; cursor:pointer; font-family:'Noto Sans TC',sans-serif; }
+.picker-tree { flex:1; overflow-y:auto; padding:8px 0; }
+.picker-item { display:flex; align-items:center; padding:12px 20px; cursor:pointer; transition:background .12s; }
+.picker-item:active { background:var(--bg2); }
+.picker-item.selected { background:rgba(184,146,58,.08); }
+.picker-item-icon { font-size:1rem; margin-right:10px; }
+.picker-item-name { font-size:.87rem; color:var(--text2); }
+
+/* ── NEW FOLDER MODAL ── */
+#modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#modal-overlay.open { opacity:1; pointer-events:all; }
+#modal-box {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:18px;
+  width:100%; max-width:340px; padding:24px;
+  transform:scale(.95); transition:transform .2s;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+}
+#modal-overlay.open #modal-box { transform:scale(1); }
+.modal-title { font-size:1rem; font-weight:500; color:var(--text); margin-bottom:16px; }
+.modal-input {
+  width:100%; background:var(--bg2); border:1px solid var(--border2); border-radius:10px;
+  padding:12px 14px; font-size:.95rem; color:var(--text); outline:none;
+  font-family:'Noto Sans TC',sans-serif; margin-bottom:16px;
+  transition:border-color .15s;
+}
+.modal-input:focus { border-color:var(--gold); }
+.modal-btns { display:flex; gap:10px; }
+.modal-btn { flex:1; padding:12px; border-radius:10px; border:none; font-size:.85rem; font-family:'Noto Sans TC',sans-serif; cursor:pointer; transition:background .15s; }
+.modal-btn.cancel { background:var(--bg2); color:var(--text2); border:1px solid var(--border); }
+.modal-btn.confirm { background:var(--gold); color:#fff; font-weight:500; }
+.modal-btn:active { opacity:.8; }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; bottom:calc(var(--safe-bot) + 28px); left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--text); border-radius:10px;
+  padding:10px 20px; font-size:.82rem; color:var(--bg); z-index:500;
+  opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; white-space:nowrap;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── CONTEXT MENU ── */
+#ctx-menu {
+  position:fixed; background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+  z-index:400; min-width:150px; overflow:hidden;
+  opacity:0; pointer-events:none; transform:scale(.95); transition:opacity .15s, transform .15s;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+}
+#ctx-menu.open { opacity:1; pointer-events:all; transform:scale(1); }
+.ctx-item { padding:12px 16px; font-size:.85rem; color:var(--text2); cursor:pointer; transition:background .1s; }
+.ctx-item:active { background:var(--bg2); }
+.ctx-item.danger { color:var(--red); }
+.ctx-divider { height:1px; background:var(--border); }
+
+/* ── FOLDER VIEW ── */
+#folder-view { background:var(--bg); }
+.folder-view-body { flex:1; overflow-y:auto; padding:20px 20px calc(var(--safe-bot) + 24px); }
+.word-list { display:flex; flex-direction:column; gap:8px; }
+.word-item {
+  background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.word-item-left { flex:1; min-width:0; }
+.word-english { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-style:italic; color:var(--text); }
+.word-chinese { font-size:.8rem; color:var(--text2); margin-top:3px; }
+.word-stage { font-size:.68rem; color:var(--text3); margin-top:2px; }
+.word-item-right { display:flex; align-items:center; gap:10px; flex-shrink:0; margin-left:12px; }
+.word-due-badge {
+  font-size:.68rem; padding:3px 8px; border-radius:5px;
+  background:rgba(184,146,58,.12); color:var(--gold); border:1px solid rgba(184,146,58,.2);
+}
+.word-done-badge {
+  font-size:.68rem; padding:3px 8px; border-radius:5px;
+  background:rgba(61,122,82,.1); color:var(--green); border:1px solid rgba(61,122,82,.2);
+}
+.word-pending-badge {
+  font-size:.68rem; padding:3px 8px; border-radius:5px;
+  background:var(--bg2); color:var(--text3); border:1px solid var(--border);
+}
+.folder-view-actions { display:flex; gap:10px; margin-bottom:18px; }
+.folder-view-actions .gold-btn { flex:1; }
+.fv-section-title { font-size:.7rem; color:var(--text3); letter-spacing:.15em; text-transform:uppercase; margin:20px 0 10px; }
+
+/* ── FOLDER MENU SHEET ── */
+#folder-menu-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200;
+  display:flex; align-items:flex-end;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#folder-menu-overlay.open { opacity:1; pointer-events:all; }
+#folder-menu {
+  background:var(--bg3); border-radius:20px 20px 0 0; width:100%;
+  padding-bottom:calc(var(--safe-bot) + 8px);
+  transform:translateY(100%); transition:transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 -4px 24px rgba(0,0,0,.1);
+}
+#folder-menu-overlay.open #folder-menu { transform:translateY(0); }
+.sheet-item {
+  padding:16px 22px; font-size:.92rem; color:var(--text); cursor:pointer;
+  transition:background .12s; display:flex; align-items:center; gap:10px;
+}
+.sheet-item:active { background:var(--bg2); }
+.sheet-item.danger { color:var(--red); }
+.sheet-divider { height:1px; background:var(--border); margin:4px 0; }
+.sheet-cancel {
+  margin:8px 16px 0; padding:14px; text-align:center; border-radius:12px;
+  background:var(--bg2); color:var(--text2); font-size:.9rem; cursor:pointer;
+  transition:background .12s;
+}
+.sheet-cancel:active { background:var(--border); }
+
+/* ── DELETE CONFIRM ── */
+#del-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:350;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#del-overlay.open { opacity:1; pointer-events:all; }
+#del-box {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:18px;
+  width:100%; max-width:320px; padding:24px;
+  transform:scale(.95); transition:transform .2s;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+}
+#del-overlay.open #del-box { transform:scale(1); }
+.del-body { font-size:.85rem; color:var(--text2); margin-bottom:20px; line-height:1.6; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="home">
+  <div class="topbar">
+    <button class="icon-btn" id="menu-btn" onclick="openDrawer()">☰</button>
+    <div>
+      <div class="topbar-title">WordVault</div>
+      <div class="topbar-sub">間隔複習系統</div>
+    </div>
+    <button class="icon-btn" id="home-bell-btn" onclick="showScreen('add-word')">＋</button>
+  </div>
+  <div class="home-body">
+    <div class="home-hero">
+      <div class="home-logo">WordVault</div>
+      <div class="home-tagline">Spaced Repetition · 間隔複習</div>
+    </div>
+    <div class="notify-card" id="notify-card">
+      <div class="notify-icon">🔔</div>
+      <div class="notify-text">
+        <strong>啟用推播通知</strong>
+        <span>到時間自動提醒你複習</span>
+      </div>
+      <button class="gold-btn" id="notify-btn" onclick="requestPush()">啟用</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">總單字</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-due">0</div><div class="stat-label">待複習</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-done">0</div><div class="stat-label">已完成</div></div>
+    </div>
+    <div class="section-title">今日待複習</div>
+    <div class="due-list" id="due-list"></div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div class="screen" id="review">
+  <div class="topbar">
+    <button class="icon-btn" onclick="showScreen('home')">←</button>
+    <div><div class="topbar-title" id="review-folder-name">複習</div></div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="review-body" id="review-body">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<!-- FOLDER VIEW -->
+<div class="screen" id="folder-view">
+  <div class="topbar">
+    <button class="icon-btn" onclick="goBackFromFolder()">←</button>
+    <div>
+      <div class="topbar-title" id="fv-title">資料夾</div>
+      <div class="topbar-sub" id="fv-sub"></div>
+    </div>
+    <button class="icon-btn" onclick="openFolderMenu()">⋯</button>
+  </div>
+  <div class="folder-view-body" id="folder-view-body">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<!-- ADD WORD -->
+<div class="screen" id="add-word">
+  <div class="topbar">
+    <button class="icon-btn" onclick="showScreen('home')">←</button>
+    <div><div class="topbar-title">新增單字</div></div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="add-body">
+    <div class="field-group">
+      <label class="field-label">英文單字</label>
+      <input class="field-input" id="input-en" placeholder="e.g. ephemeral" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <label class="field-label">中文意思</label>
+      <div class="cn-row">
+        <input class="field-input cn-input" id="input-cn" placeholder="自動查詢中…" autocomplete="off">
+      </div>
+      <div class="cn-status" id="cn-status"></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">資料夾</label>
+      <button class="folder-select-btn" id="folder-select-btn" onclick="openFolderPicker()">
+        <span>📁</span><span id="folder-select-label">選擇資料夾</span>
+      </button>
+    </div>
+    <div class="interval-preview">
+      <div class="interval-preview-title">複習間隔</div>
+      <div class="interval-chips" id="interval-chips"><!-- rendered from INTERVAL_LABELS --></div>
+    </div>
+    <button class="gold-btn add-submit" id="add-submit-btn" onclick="addWord()">加入單字庫</button>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">WordVault</div>
+    <button class="icon-btn" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-actions">
+    <button class="drawer-act-btn gold" onclick="openNewFolderModal(null)">📁 新增資料夾</button>
+    <button class="drawer-act-btn" onclick="closeDrawer();showScreen('add-word')">＋ 新增單字</button>
+  </div>
+  <div class="folder-tree" id="folder-tree"></div>
+</div>
+
+<!-- FOLDER PICKER -->
+<div id="folder-picker-overlay" onclick="closeFolderPicker(event)">
+  <div id="folder-picker">
+    <div class="picker-header">
+      <div class="picker-title">選擇資料夾</div>
+      <button class="picker-new-btn" onclick="openNewFolderModal(null, true)">＋ 新資料夾</button>
+    </div>
+    <div class="picker-tree" id="picker-tree"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal-box">
+    <div class="modal-title" id="modal-title">新增資料夾</div>
+    <input class="modal-input" id="modal-input" placeholder="資料夾名稱">
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+      <button class="modal-btn confirm" id="modal-confirm" onclick="confirmModal()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-add-sub">新增子資料夾</div>
+  <div class="ctx-item" id="ctx-rename">重新命名</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item danger" id="ctx-delete">刪除</div>
+</div>
+
+<!-- FOLDER MENU (sheet) -->
+<div id="folder-menu-overlay" onclick="closeFolderMenu(event)">
+  <div id="folder-menu">
+    <div class="sheet-item" onclick="closeFolderMenu();addWordToFolder(state.viewingFolderId)">＋ 新增單字</div>
+    <div class="sheet-item" onclick="closeFolderMenu();openNewFolderModal(state.viewingFolderId)">📁 新增子資料夾</div>
+    <div class="sheet-item" onclick="closeFolderMenu();openRenameModal(state.viewingFolderId)">✏️ 重新命名</div>
+    <div class="sheet-divider"></div>
+    <div class="sheet-item danger" onclick="closeFolderMenu();confirmDeleteFolder(state.viewingFolderId)">🗑️ 刪除此資料夾</div>
+    <div class="sheet-cancel" onclick="closeFolderMenu()">取消</div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="del-overlay" onclick="closeDelModal(event)">
+  <div id="del-box">
+    <div class="modal-title" id="del-title">確認刪除</div>
+    <div class="del-body" id="del-body"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeDelModal()">取消</button>
+      <button class="modal-btn" id="del-confirm-btn" style="background:var(--red);color:#fff;font-weight:500" onclick="execDelete()">刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG  ← 上線前依照 README.md 的步驟，把下面三個值換成你自己的
+// ══════════════════════════════════════════════
+// Supabase 專案設定（Project Settings → API）
+const SUPABASE_URL      = 'https://YOUR-PROJECT-REF.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+// 用 `npx web-push generate-vapid-keys` 產生，這裡只需填「公開」金鑰
+const VAPID_PUBLIC_KEY  = 'YOUR-VAPID-PUBLIC-KEY';
+
+// 複習間隔：從加入那一刻開始計時，每個階段到期就觸發通知
+const INTERVALS_MS = [
+  10 * 60000,         // 10 分鐘
+  1  * 3600000,       // 1 小時
+  12 * 3600000,       // 12 小時
+  1  * 86400000,      // 1 天
+  2  * 86400000,      // 2 天
+  4  * 86400000,      // 4 天
+  7  * 86400000,      // 7 天
+  15 * 86400000,      // 15 天
+  30 * 86400000,      // 30 天
+];
+const INTERVAL_LABELS = ['10分鐘','1小時','12小時','1天','2天','4天','7天','15天','30天'];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let db;
+let state = {
+  folders: [],
+  words: [],
+  selectedFolderId: null,
+  viewingFolderId: null,
+  addFolderId: null,
+  userId: null,
+  pushSub: null,
+};
+
+// ══════════════════════════════════════════════
+//  INDEXEDDB
+// ══════════════════════════════════════════════
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('wordvault', 2);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('folders')) d.createObjectStore('folders', { keyPath:'id' });
+      if (!d.objectStoreNames.contains('words'))   d.createObjectStore('words',   { keyPath:'id' });
+      if (!d.objectStoreNames.contains('meta'))    d.createObjectStore('meta',    { keyPath:'key' });
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+function dbPut(store, obj) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+function dbDelete(store, id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(id);
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+async function loadState() {
+  state.folders = await dbGetAll('folders');
+  state.words   = await dbGetAll('words');
+  const metaAll = await dbGetAll('meta');
+  const userMeta = metaAll.find(m => m.key === 'userId');
+  if (userMeta) state.userId = userMeta.value;
+}
+
+// ══════════════════════════════════════════════
+//  CLOUD SYNC (Supabase)
+//  IndexedDB stays the source of truth for the whole app — it works fully
+//  offline. The only thing that needs to leave the device is "when is each
+//  word next due", because that's what the server-side cron job reads to
+//  decide when to send a push notification. See README.md for setup.
+// ══════════════════════════════════════════════
+let supabase = null;
+
+function isSupabaseConfigured() {
+  return SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR-')
+      && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('YOUR-')
+      && VAPID_PUBLIC_KEY && !VAPID_PUBLIC_KEY.includes('YOUR-');
+}
+
+async function initSupabase() {
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase 尚未設定，僅以本機模式執行（複習功能正常，但不會有推播通知）。');
+    return;
+  }
+  try {
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const session = await ensureAuthSession();
+    if (session) {
+      state.userId = session.user.id;
+      await dbPut('meta', { key:'userId', value: state.userId });
+      syncAllWordsToCloud();
+    }
+  } catch (err) {
+    console.error('Supabase 初始化失敗:', err);
+    supabase = null;
+  }
+}
+
+async function ensureAuthSession() {
+  if (!supabase) return null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return session;
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+    return data.session;
+  } catch (err) {
+    console.error('匿名登入失敗（請確認 Supabase 專案已啟用 Anonymous Sign-ins):', err);
+    return null;
+  }
+}
+
+// Upsert one word's schedule. Called whenever a word is created or its stage/
+// nextReview changes. Deliberately omits `last_notified_for` — that column is
+// only ever written by the send-due-notifications function.
+async function syncWordToCloud(word) {
+  if (!supabase || !state.userId) return;
+  try {
+    const { error } = await supabase.from('word_schedule').upsert({
+      id: word.id,
+      user_id: state.userId,
+      english: word.english,
+      chinese: word.chinese,
+      stage: word.stage,
+      next_review: word.nextReview ? new Date(word.nextReview).toISOString() : null,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+  } catch (err) { console.warn('雲端同步失敗（下次變動時會重試）:', err.message || err); }
+}
+
+async function deleteWordFromCloud(id) {
+  if (!supabase || !state.userId) return;
+  try { await supabase.from('word_schedule').delete().eq('id', id).eq('user_id', state.userId); }
+  catch (err) { console.warn('雲端刪除失敗:', err.message || err); }
+}
+
+// One-time backfill: push any local words that the cloud doesn't know about yet
+// (e.g. added before Supabase was configured, or while offline). Existing rows
+// are left untouched so we never reset `last_notified_for` and cause re-pushes.
+async function syncAllWordsToCloud() {
+  if (!supabase || !state.userId) return;
+  try {
+    const active = state.words.filter(w => w.stage < INTERVALS_MS.length && w.nextReview);
+    if (!active.length) return;
+    const { data: existing, error } = await supabase
+      .from('word_schedule').select('id').eq('user_id', state.userId);
+    if (error) throw error;
+    const known = new Set((existing || []).map(r => r.id));
+    const missing = active.filter(w => !known.has(w.id));
+    if (!missing.length) return;
+    await supabase.from('word_schedule').insert(missing.map(w => ({
+      id: w.id,
+      user_id: state.userId,
+      english: w.english,
+      chinese: w.chinese,
+      stage: w.stage,
+      next_review: new Date(w.nextReview).toISOString(),
+      updated_at: new Date().toISOString(),
+    })));
+  } catch (err) { console.warn('雲端回填失敗:', err.message || err); }
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+async function init() {
+  db = await openDB();
+  await loadState();
+  await initSupabase();
+
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      console.log('SW registered:', reg.scope);
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (!e.data) return;
+        if (e.data.type === 'REVIEW_WORD') startSingleReview(e.data.wordId);
+        if (e.data.type === 'REVIEW_DUE')  startReview(null);
+      });
+    } catch(err) { console.log('SW needs HTTPS, skipping:', err.message); }
+  }
+
+  renderIntervalChips();
+  renderHome();
+  renderDrawer();
+  checkPushStatus();
+
+  // EN input — auto Chinese lookup on a short debounce; CN input — remember manual edits
+  const enInput = document.getElementById('input-en');
+  const cnInput = document.getElementById('input-cn');
+  let cnTimer;
+  enInput.addEventListener('input', e => {
+    clearTimeout(cnTimer);
+    const val = e.target.value.trim();
+    const status = document.getElementById('cn-status');
+    if (!val) {
+      cnInput.value = '';
+      cnUserEdited = false;
+      status.textContent = '';
+      status.className = 'cn-status';
+      return;
+    }
+    status.textContent = '';
+    status.className = 'cn-status';
+    cnTimer = setTimeout(() => lookupChinese(val), 600);
+  });
+  cnInput.addEventListener('input', () => { cnUserEdited = true; });
+
+  // Check for ?review= param (from notification tap, when no open tab could be messaged)
+  const params = new URLSearchParams(location.search);
+  if (params.has('review')) {
+    const val = params.get('review');
+    if (val === 'due') startReview(null);
+    else startSingleReview(val);
+  }
+}
+
+function renderIntervalChips() {
+  document.getElementById('interval-chips').innerHTML = INTERVAL_LABELS
+    .map((label, i) => `<div class="interval-chip${i===0?' active':''}">${label}</div>`)
+    .join('');
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN NAV
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'home') renderHome();
+}
+
+// ══════════════════════════════════════════════
+//  DRAWER
+// ══════════════════════════════════════════════
+function openDrawer()  { document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
+
+function renderDrawer() {
+  const tree = document.getElementById('folder-tree');
+  tree.innerHTML = buildFolderTreeHTML(null, 0, 'drawer');
+}
+
+function buildFolderTreeHTML(parentId, depth, mode) {
+  const children = state.folders.filter(f => f.parentId === parentId);
+  let html = '';
+
+  // 根目錄加「所有單字」入口
+  if (parentId === null && mode === 'drawer') {
+    const allSelected = state.selectedFolderId === null;
+    html += `<div class="folder-item${allSelected?' selected':''}" onclick="selectFolder(null)">
+      <span class="folder-toggle leaf"></span>
+      <span class="folder-icon">📚</span>
+      <span class="folder-name">所有單字</span>
+      <span class="folder-count">${state.words.length}</span>
+    </div>`;
+  }
+
+  for (const f of children) {
+    const hasChildren = state.folders.some(c => c.parentId === f.id);
+    const wordCount = countWordsInFolder(f.id);
+    const indent = depth * 16;
+    const isSelected = state.selectedFolderId === f.id;
+
+    if (mode === 'drawer') {
+      html += `<div class="folder-item${isSelected?' selected':''}" style="padding-left:${16+indent}px" data-fid="${f.id}"
+        oncontextmenu="openCtxMenu(event,'${f.id}')">
+        <span class="folder-toggle${hasChildren?'':' leaf'}" id="tog-${f.id}" data-toggle="${f.id}"
+          onclick="event.stopPropagation();toggleFolder('${f.id}')">▶</span>
+        <span class="folder-icon" onclick="selectFolder('${f.id}')">📁</span>
+        <span class="folder-name" onclick="selectFolder('${f.id}')">${esc(f.name)}</span>
+        <span class="folder-count" onclick="selectFolder('${f.id}')">${wordCount}</span>
+      </div>
+      <div class="folder-children" id="fc-${f.id}">
+        ${buildFolderTreeHTML(f.id, depth+1, mode)}
+      </div>`;
+    } else {
+      html += `<div class="picker-item${isSelected?' selected':''}" style="padding-left:${20+indent}px"
+        onclick="pickFolder('${f.id}','${esc(f.name)}')">
+        <span class="picker-item-icon">📁</span>
+        <span class="picker-item-name">${esc(f.name)}</span>
+      </div>
+      ${buildFolderTreeHTML(f.id, depth+1, mode)}`;
+    }
+  }
+  return html;
+}
+
+function toggleFolder(fid) {
+  const el  = document.getElementById(`fc-${fid}`);
+  const tog = document.getElementById(`tog-${fid}`);
+  if (!el) return;
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open', !isOpen);
+  if (tog) tog.classList.toggle('expanded', !isOpen);
+}
+
+// ── helpers ──
+function countWordsInFolder(folderId) {
+  const ids = getAllFolderIds(folderId);
+  return state.words.filter(w => ids.includes(w.folderId)).length;
+}
+
+function getAllFolderIds(folderId) {
+  const ids = [folderId];
+  state.folders.filter(f => f.parentId === folderId).forEach(f => ids.push(...getAllFolderIds(f.id)));
+  return ids;
+}
+
+function selectFolder(fid) {
+  state.selectedFolderId = fid;
+  closeDrawer();
+  if (fid === null) {
+    renderHome();
+    showScreen('home');
+  } else {
+    state.viewingFolderId = fid;
+    renderFolderView(fid);
+    showScreen('folder-view');
+  }
+  renderDrawer();
+}
+
+function renderFolderView(fid) {
+  const folder = state.folders.find(f => f.id === fid);
+  if (!folder) return;
+  const now = Date.now();
+  document.getElementById('fv-title').textContent = folder.name;
+  const subFolders = state.folders.filter(f => f.parentId === fid);
+  const words   = state.words.filter(w => w.folderId === fid);
+  const due     = words.filter(w => w.stage < INTERVALS_MS.length && w.nextReview && w.nextReview <= now);
+  const pending = words.filter(w => w.stage < INTERVALS_MS.length && (!w.nextReview || w.nextReview > now));
+  const done    = words.filter(w => w.stage >= INTERVALS_MS.length);
+  document.getElementById('fv-sub').textContent = `${words.length} 個單字`;
+  let html = '';
+  if (due.length > 0) {
+    html += `<div class="folder-view-actions">
+      <button class="gold-btn" onclick="startFolderReview('${fid}')">▶ 開始複習（${due.length} 個待複習）</button>
+    </div>`;
+  }
+  if (subFolders.length > 0) {
+    html += `<div class="fv-section-title">子資料夾</div><div class="word-list">`;
+    for (const sf of subFolders) {
+      const sfCount = countWordsInFolder(sf.id);
+      const sfDue = getAllFolderIds(sf.id).reduce((acc, id) =>
+        acc + state.words.filter(w => w.folderId === id && w.stage < INTERVALS_MS.length && w.nextReview && w.nextReview <= now).length, 0);
+      html += `<div class="word-item" onclick="selectFolder('${sf.id}')">
+        <div class="word-item-left">
+          <div class="word-english">📁 ${esc(sf.name)}</div>
+          <div class="word-stage">${sfCount} 個單字</div>
+        </div>
+        <div class="word-item-right">
+          ${sfDue > 0 ? `<span class="word-due-badge">${sfDue} 待複習</span>` : ''}
+          <span style="color:var(--text3);font-size:.9rem">›</span>
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  if (due.length > 0) {
+    html += `<div class="fv-section-title">待複習</div><div class="word-list">` +
+      due.map(w => wordItemHTML(w,'due')).join('') + `</div>`;
+  }
+  if (pending.length > 0) {
+    html += `<div class="fv-section-title">複習中</div><div class="word-list">` +
+      pending.map(w => wordItemHTML(w,'pending')).join('') + `</div>`;
+  }
+  if (done.length > 0) {
+    html += `<div class="fv-section-title">已完成</div><div class="word-list">` +
+      done.map(w => wordItemHTML(w,'done')).join('') + `</div>`;
+  }
+  if (words.length === 0 && subFolders.length === 0) {
+    html += `<div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <div class="empty-text" style="margin-bottom:20px">這個資料夾還沒有單字</div>
+      <button class="gold-btn" onclick="addWordToFolder('${fid}')">＋ 新增單字</button>
+    </div>`;
+  }
+  document.getElementById('folder-view-body').innerHTML = html;
+}
+
+function wordItemHTML(w, type) {
+  const badge = type === 'due'
+    ? `<span class="word-due-badge">待複習</span>`
+    : type === 'done'
+    ? `<span class="word-done-badge">✓ 完成</span>`
+    : `<span class="word-pending-badge">第${w.stage+1}關</span>`;
+  return `<div class="word-item" ontouchstart="startWordLongPress('${w.id}',event)" ontouchend="cancelWordLongPress()" ontouchmove="cancelWordLongPress()">
+    <div class="word-item-left">
+      <div class="word-english">${esc(w.english)}</div>
+      <div class="word-chinese">${esc(w.chinese)}</div>
+      <div class="word-stage">${INTERVAL_LABELS[Math.min(w.stage, INTERVAL_LABELS.length-1)]} 階段</div>
+    </div>
+    <div class="word-item-right">${badge}</div>
+  </div>`;
+}
+
+let wordLongPressTimer = null;
+function startWordLongPress(wid, e) {
+  cancelWordLongPress();
+  wordLongPressTimer = setTimeout(() => {
+    if (navigator.vibrate) navigator.vibrate(30);
+    confirmDeleteWord(wid);
+  }, 600);
+}
+function cancelWordLongPress() {
+  clearTimeout(wordLongPressTimer);
+  wordLongPressTimer = null;
+}
+
+function startFolderReview(fid) {
+  const now = Date.now();
+  const allIds = getAllFolderIds(fid);
+  reviewQueue = state.words.filter(w => allIds.includes(w.folderId) && w.stage < INTERVALS_MS.length && w.nextReview && w.nextReview <= now);
+  reviewIdx = 0; cardFlipped = false;
+  showScreen('review');
+  renderReviewCard();
+}
+function renderHome() {
+  const now = Date.now();
+  const folderIds = state.selectedFolderId ? getAllFolderIds(state.selectedFolderId) : null;
+  const filtered = folderIds ? state.words.filter(w => folderIds.includes(w.folderId)) : state.words;
+  const due = filtered.filter(w => w.stage < INTERVALS_MS.length && w.nextReview && w.nextReview <= now);
+  const done = filtered.filter(w => w.stage >= INTERVALS_MS.length);
+
+  document.getElementById('stat-total').textContent = filtered.length;
+  document.getElementById('stat-due').textContent   = due.length;
+  document.getElementById('stat-done').textContent  = done.length;
+
+  const list = document.getElementById('due-list');
+  if (due.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🌿</div><div class="empty-text">目前沒有待複習的單字</div></div>`;
+  } else {
+    list.innerHTML = due.map(w => `
+      <div class="due-item" onclick="startReview(${JSON.stringify([w.id]).replace(/"/g,'&quot;')})">
+        <div>
+          <div class="due-word">${esc(w.english)}</div>
+          <div class="due-stage">第 ${w.stage+1} 關・${INTERVAL_LABELS[w.stage]}</div>
+        </div>
+        <div class="due-arrow">›</div>
+      </div>`).join('');
+    // Add "Review All" button if >1
+    if (due.length > 1) {
+      list.innerHTML = `<div class="due-item" style="background:rgba(201,168,76,.06);border-color:var(--gold-dim)" onclick="startReview(null)">
+        <div><div class="due-word" style="color:var(--gold)">全部複習</div><div class="due-stage">${due.length} 個單字待複習</div></div>
+        <div class="due-arrow" style="color:var(--gold)">›</div>
+      </div>` + list.innerHTML;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+//  REVIEW
+// ══════════════════════════════════════════════
+let reviewQueue = [];
+let reviewIdx   = 0;
+let cardFlipped  = false;
+
+function startReview(ids) {
+  const now = Date.now();
+  const folderIds = state.selectedFolderId ? getAllFolderIds(state.selectedFolderId) : null;
+  const pool = folderIds ? state.words.filter(w => folderIds.includes(w.folderId)) : state.words;
+  if (ids === null) {
+    reviewQueue = pool.filter(w => w.stage < INTERVALS_MS.length && w.nextReview && w.nextReview <= now);
+  } else {
+    reviewQueue = ids.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+  }
+  reviewIdx = 0;
+  cardFlipped = false;
+  showScreen('review');
+  renderReviewCard();
+}
+
+function startSingleReview(wordId) {
+  const word = state.words.find(w => w.id === wordId);
+  if (!word) return;
+  reviewQueue = [word];
+  reviewIdx = 0;
+  cardFlipped = false;
+  showScreen('review');
+  renderReviewCard();
+}
+
+function renderReviewCard() {
+  const body = document.getElementById('review-body');
+  if (reviewIdx >= reviewQueue.length) {
+    body.innerHTML = `<div class="review-done">
+      <div class="review-done-icon">✨</div>
+      <div class="review-done-title">全部完成！</div>
+      <div class="review-done-sub" style="margin-bottom:28px">今日複習結束</div>
+      <button class="gold-btn" onclick="showScreen('home')">返回主畫面</button>
+    </div>`;
+    return;
+  }
+  const word = reviewQueue[reviewIdx];
+  cardFlipped = false;
+  body.innerHTML = `
+    <div class="review-progress">${reviewIdx+1} / ${reviewQueue.length}</div>
+    <div class="stage-badge">複習階段 <span>${word.stage+1}／${INTERVALS_MS.length}</span>・${INTERVAL_LABELS[word.stage]}</div>
+    <div class="card-wrap" id="card-wrap" onclick="flipCard()">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face">
+          <div class="card-hint">點擊翻牌</div>
+          <div class="card-english">${esc(word.english)}</div>
+          <div class="card-tap-hint">tap to reveal</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-chinese-big">${esc(word.chinese)}</div>
+          <div class="card-english-small">${esc(word.english)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row three" id="btn-row" style="opacity:.3;pointer-events:none">
+      <button class="review-btn btn-forget" onclick="rateWord(0)">不記得</button>
+      <button class="review-btn btn-vague"  onclick="rateWord(1)">有印象</button>
+      <button class="review-btn btn-know"   onclick="rateWord(2)">記得</button>
+    </div>`;
+}
+
+function flipCard() {
+  if (cardFlipped) return;
+  cardFlipped = true;
+  document.getElementById('card-inner').classList.add('flipped');
+  const row = document.getElementById('btn-row');
+  row.style.opacity = '1';
+  row.style.pointerEvents = 'all';
+}
+
+async function rateWord(rating) {
+  const word = reviewQueue[reviewIdx];
+  // rating: 0=forget, 1=vague, 2=know
+  if (rating === 0) {
+    // 重置到 stage 0
+    word.stage = 0;
+    word.nextReview = Date.now() + INTERVALS_MS[0];
+  } else if (rating === 1) {
+    // 不進階，重複同 stage
+    word.nextReview = Date.now() + INTERVALS_MS[word.stage];
+  } else {
+    // 進階
+    word.stage = Math.min(word.stage + 1, INTERVALS_MS.length);
+    word.nextReview = word.stage < INTERVALS_MS.length ? Date.now() + INTERVALS_MS[word.stage] : null;
+  }
+  word.history = word.history || [];
+  word.history.push({ t: Date.now(), rating });
+  await dbPut('words', word);
+  syncWordToCloud(word);
+  reviewIdx++;
+  renderReviewCard();
+}
+
+// ══════════════════════════════════════════════
+//  ADD WORD
+// ══════════════════════════════════════════════
+let cnUserEdited = false; // becomes true once the user types into 中文 themselves —
+                          // after that we stop overwriting it with auto-lookup results
+
+async function lookupChinese(english) {
+  const status = document.getElementById('cn-status');
+  status.textContent = '查詢中…';
+  status.className = 'cn-status loading';
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-TW`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('network');
+    const data = await res.json();
+    const translated = data && data.responseData && data.responseData.translatedText;
+    if (cnUserEdited) return; // user already started typing their own answer — leave it alone
+    if (translated && !/^[a-zA-Z\s.,!?'"-]+$/.test(translated)) {
+      document.getElementById('input-cn').value = translated.trim();
+      status.textContent = '已自動帶入翻譯，可手動修改';
+      status.className = 'cn-status done';
+    } else {
+      status.textContent = '查無翻譯，請手動輸入';
+      status.className = 'cn-status';
+    }
+  } catch (err) {
+    if (cnUserEdited) return;
+    status.textContent = '翻譯查詢失敗，請手動輸入';
+    status.className = 'cn-status';
+  }
+}
+
+async function addWord() {
+  const en = document.getElementById('input-en').value.trim();
+  const cn = document.getElementById('input-cn').value.trim();
+  if (!en) { showToast('請輸入英文單字'); return; }
+  if (!cn) { showToast('請輸入或等待中文意思'); return; }
+
+  const word = {
+    id: 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    english: en, chinese: cn,
+    folderId: state.addFolderId,
+    createdAt: Date.now(),
+    stage: 0,
+    nextReview: Date.now() + INTERVALS_MS[0],
+    history: [],
+  };
+
+  await dbPut('words', word);
+  state.words.push(word);
+  syncWordToCloud(word);
+
+  showToast(`「${en}」已加入！`);
+  document.getElementById('input-en').value = '';
+  document.getElementById('input-cn').value = '';
+  document.getElementById('cn-status').textContent = '';
+  document.getElementById('cn-status').className = 'cn-status';
+  cnUserEdited = false;
+  renderDrawer();
+  const returnFid = state.addFolderId;
+  state.addFolderId = null;
+  document.getElementById('folder-select-label').textContent = '選擇資料夾';
+  if (returnFid) {
+    state.viewingFolderId = returnFid;
+    renderFolderView(returnFid);
+    showScreen('folder-view');
+  } else {
+    showScreen('home');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  FOLDER PICKER
+// ══════════════════════════════════════════════
+function openFolderPicker() {
+  renderPickerTree();
+  document.getElementById('folder-picker-overlay').classList.add('open');
+}
+
+function closeFolderPicker(e) {
+  if (!e || e.target === document.getElementById('folder-picker-overlay')) {
+    document.getElementById('folder-picker-overlay').classList.remove('open');
+  }
+}
+
+function renderPickerTree() {
+  document.getElementById('picker-tree').innerHTML =
+    `<div class="picker-item" onclick="pickFolder(null,'所有單字')">
+      <span class="picker-item-icon">📚</span>
+      <span class="picker-item-name">根目錄（無資料夾）</span>
+    </div>` + buildFolderTreeHTML(null, 0, 'picker');
+}
+
+function pickFolder(fid, name) {
+  state.addFolderId = fid;
+  document.getElementById('folder-select-label').textContent = name || '根目錄';
+  closeFolderPicker();
+}
+
+// ══════════════════════════════════════════════
+//  NEW FOLDER MODAL
+// ══════════════════════════════════════════════
+let modalMode = null; // { type:'new'|'rename', parentId, folderId }
+let modalFromPicker = false;
+
+function openNewFolderModal(parentId, fromPicker=false) {
+  modalMode = { type:'new', parentId };
+  modalFromPicker = fromPicker;
+  document.getElementById('modal-title').textContent = '新增資料夾';
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('modal-input').focus(), 200);
+}
+
+function openRenameModal(folderId) {
+  const f = state.folders.find(f => f.id === folderId);
+  if (!f) return;
+  modalMode = { type:'rename', folderId };
+  document.getElementById('modal-title').textContent = '重新命名';
+  document.getElementById('modal-input').value = f.name;
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('modal-input').focus(), 200);
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+
+async function confirmModal() {
+  const name = document.getElementById('modal-input').value.trim();
+  if (!name) { showToast('請輸入名稱'); return; }
+  closeModal();
+  if (modalMode.type === 'new') {
+    const f = { id:'f_'+Date.now()+'_'+Math.random().toString(36).slice(2,5), name, parentId: modalMode.parentId };
+    await dbPut('folders', f);
+    state.folders.push(f);
+    if (modalFromPicker) { renderPickerTree(); openFolderPicker(); }
+  } else if (modalMode.type === 'rename') {
+    const f = state.folders.find(f => f.id === modalMode.folderId);
+    if (f) { f.name = name; await dbPut('folders', f); }
+  }
+  renderDrawer();
+  showToast('完成');
+}
+
+// Enter key in modal
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('modal-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmModal();
+  });
+});
+
+// ══════════════════════════════════════════════
+//  FOLDER MENU (topbar ⋯)
+// ══════════════════════════════════════════════
+function addWordToFolder(fid) {
+  state.addFolderId = fid;
+  const folder = state.folders.find(f => f.id === fid);
+  document.getElementById('folder-select-label').textContent = folder ? folder.name : '選擇資料夾';
+  showScreen('add-word');
+}
+
+function openFolderMenu() {
+  document.getElementById('folder-menu-overlay').classList.add('open');
+}
+function closeFolderMenu(e) {
+  if (!e || e.target === document.getElementById('folder-menu-overlay')) {
+    document.getElementById('folder-menu-overlay').classList.remove('open');
+  }
+}
+
+// 返回：若有上層資料夾就回上層，否則回首頁
+function goBackFromFolder() {
+  const fid = state.viewingFolderId;
+  const folder = state.folders.find(f => f.id === fid);
+  if (folder && folder.parentId) {
+    selectFolder(folder.parentId);
+  } else {
+    state.selectedFolderId = null;
+    showScreen('home');
+    renderHome();
+    renderDrawer();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CONTEXT MENU (drawer 長按)
+// ══════════════════════════════════════════════
+let ctxFolderId = null;
+
+function openCtxMenu(e, fid) {
+  e.preventDefault(); e.stopPropagation();
+  ctxFolderId = fid;
+  const menu = document.getElementById('ctx-menu');
+  menu.style.top  = Math.min(e.clientY, window.innerHeight - 160) + 'px';
+  menu.style.left = Math.min(e.clientX, window.innerWidth  - 170) + 'px';
+  menu.classList.add('open');
+  document.getElementById('ctx-add-sub').onclick = () => { closeCtxMenu(); openNewFolderModal(ctxFolderId); };
+  document.getElementById('ctx-rename').onclick  = () => { closeCtxMenu(); openRenameModal(ctxFolderId); };
+  document.getElementById('ctx-delete').onclick  = () => { closeCtxMenu(); confirmDeleteFolder(ctxFolderId); };
+  setTimeout(() => document.addEventListener('click', closeCtxMenu, { once:true }), 50);
+}
+
+function closeCtxMenu() { document.getElementById('ctx-menu').classList.remove('open'); }
+
+// ══════════════════════════════════════════════
+//  DELETE CONFIRM
+// ══════════════════════════════════════════════
+let pendingDelete = null; // { type: 'folder'|'word', id }
+
+function confirmDeleteFolder(fid) {
+  const folder = state.folders.find(f => f.id === fid);
+  if (!folder) return;
+  const allIds = getAllFolderIds(fid);
+  const wordCount = state.words.filter(w => allIds.includes(w.folderId)).length;
+  const subCount  = allIds.length - 1;
+  let msg = `確定要刪除「${folder.name}」嗎？`;
+  const parts = [];
+  if (subCount > 0) parts.push(`${subCount} 個子資料夾`);
+  if (wordCount > 0) parts.push(`${wordCount} 個單字`);
+  if (parts.length) msg += `\n裡面有 ${parts.join('、')}，將一併刪除。`;
+  pendingDelete = { type: 'folder', id: fid };
+  document.getElementById('del-title').textContent = '刪除資料夾';
+  document.getElementById('del-body').textContent = msg;
+  document.getElementById('del-overlay').classList.add('open');
+}
+
+function confirmDeleteWord(wid) {
+  const word = state.words.find(w => w.id === wid);
+  if (!word) return;
+  pendingDelete = { type: 'word', id: wid };
+  document.getElementById('del-title').textContent = '刪除單字';
+  document.getElementById('del-body').textContent = `確定要刪除「${word.english}」嗎？此操作無法復原。`;
+  document.getElementById('del-overlay').classList.add('open');
+}
+
+function closeDelModal(e) {
+  if (!e || e.target === document.getElementById('del-overlay')) {
+    document.getElementById('del-overlay').classList.remove('open');
+    pendingDelete = null;
+  }
+}
+
+async function execDelete() {
+  document.getElementById('del-overlay').classList.remove('open');
+  if (!pendingDelete) return;
+  if (pendingDelete.type === 'folder') {
+    await deleteFolder(pendingDelete.id);
+  } else if (pendingDelete.type === 'word') {
+    await deleteWord(pendingDelete.id);
+  }
+  pendingDelete = null;
+}
+
+async function deleteFolder(fid) {
+  const allIds = getAllFolderIds(fid);
+  for (const id of allIds) {
+    await dbDelete('folders', id);
+    state.folders = state.folders.filter(f => f.id !== id);
+  }
+  const wordsToDelete = state.words.filter(w => allIds.includes(w.folderId));
+  for (const w of wordsToDelete) { await dbDelete('words', w.id); deleteWordFromCloud(w.id); }
+  state.words = state.words.filter(w => !allIds.includes(w.folderId));
+  renderDrawer();
+  // 若正在看被刪的資料夾，回首頁
+  if (allIds.includes(state.viewingFolderId)) {
+    state.viewingFolderId = null;
+    state.selectedFolderId = null;
+    showScreen('home');
+    renderHome();
+  } else if (state.viewingFolderId) {
+    renderFolderView(state.viewingFolderId);
+  }
+  showToast('已刪除');
+}
+
+async function deleteWord(wid) {
+  await dbDelete('words', wid);
+  state.words = state.words.filter(w => w.id !== wid);
+  deleteWordFromCloud(wid);
+  renderDrawer();
+  renderHome();
+  if (state.viewingFolderId) renderFolderView(state.viewingFolderId);
+  showToast('單字已刪除');
+}
+
+// ══════════════════════════════════════════════
+//  PUSH NOTIFICATIONS
+// ══════════════════════════════════════════════
+async function checkPushStatus() {
+  const card = document.getElementById('notify-card');
+  const btn  = document.getElementById('notify-btn');
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    card.style.display = 'none';
+    return;
+  }
+  if (!isSupabaseConfigured()) {
+    btn.textContent = '尚未設定';
+    btn.disabled = true;
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    btn.textContent = '通知已被封鎖';
+    btn.disabled = true;
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        btn.textContent = '已啟用';
+        btn.disabled = true;
+      }
+    } catch (err) { /* leave button as-is; user can tap to retry */ }
+  }
+}
+
+async function requestPush() {
+  if (!isSupabaseConfigured()) {
+    showToast('請先依 README.md 設定 Supabase 與 VAPID 金鑰');
+    return;
+  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    showToast('此瀏覽器不支援推播通知');
+    return;
+  }
+  const btn = document.getElementById('notify-btn');
+  const prevLabel = btn.textContent;
+  btn.disabled = true;
+  try {
+    btn.textContent = '請求權限…';
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { showToast('未授權通知權限，請至 iOS 設定 → 通知 中開啟'); btn.textContent = prevLabel; btn.disabled = false; return; }
+
+    btn.textContent = '登入中…';
+    const session = await ensureAuthSession();
+    if (!session) { showToast('登入失敗：請確認 Supabase 專案已啟用 Anonymous Sign-ins'); btn.textContent = prevLabel; btn.disabled = false; return; }
+    state.userId = session.user.id;
+    await dbPut('meta', { key:'userId', value: state.userId });
+
+    btn.textContent = '建立訂閱…';
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    state.pushSub = sub;
+
+    btn.textContent = '儲存訂閱…';
+    const { error } = await supabase.from('push_subscriptions').upsert({
+      user_id: state.userId,
+      subscription: sub.toJSON(),
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+
+    await syncAllWordsToCloud();
+
+    btn.textContent = '已啟用';
+    btn.disabled = true;
+    showToast('推播已啟用 🔔 到時間就會提醒你複習');
+  } catch (err) {
+    console.error('requestPush error:', err);
+    showToast('啟用失敗：' + (err.message || err));
+    btn.textContent = prevLabel;
+    btn.disabled = false;
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
