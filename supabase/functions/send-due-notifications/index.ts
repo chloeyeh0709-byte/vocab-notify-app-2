@@ -38,6 +38,14 @@ interface ScheduleRow {
   last_notified_for: string | null;
 }
 
+// Multiple words due at once: name them (capped, so the notification stays
+// readable) instead of just printing a count.
+const MAX_NAMES_IN_BODY = 5;
+function formatDueBody(words: ScheduleRow[]): string {
+  const names = words.slice(0, MAX_NAMES_IN_BODY).map((w) => w.english).join('、');
+  return words.length > MAX_NAMES_IN_BODY ? `${names}…等 ${words.length} 個單字` : names;
+}
+
 Deno.serve(async (req) => {
   if (CRON_SECRET) {
     const auth = req.headers.get('authorization') ?? '';
@@ -110,7 +118,7 @@ Deno.serve(async (req) => {
         }
       : {
           title: '📚 該複習了',
-          body: `你有 ${words.length} 個單字到複習時間了`,
+          body: formatDueBody(words),
           data: { type: 'review_due' },
         };
 
