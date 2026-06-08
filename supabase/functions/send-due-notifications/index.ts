@@ -89,14 +89,18 @@ Deno.serve(async (req) => {
 
   let usersNotified = 0;
   let removedSubscriptions = 0;
-  const stampedAt = now.toISOString();
 
-  const stamp = (ids: string[]) =>
-    supabase.from('word_schedule').update({ last_notified_for: stampedAt }).in('id', ids);
+  // Stamp each row with ITS OWN next_review value — not "now" — so the
+  // due-and-unsent check above (which compares last_notified_for to
+  // next_review) recognizes it as handled and stops re-notifying every
+  // minute. A fresh notification only fires again once next_review actually
+  // changes, e.g. the word is reviewed and advances to its next stage.
+  const stamp = (rows: ScheduleRow[]) =>
+    Promise.all(rows.map((r) =>
+      supabase.from('word_schedule').update({ last_notified_for: r.next_review }).eq('id', r.id)
+    ));
 
   for (const [userId, words] of byUser) {
-    const ids = words.map((w) => w.id);
-
     const { data: subRow } = await supabase
       .from('push_subscriptions')
       .select('subscription')
@@ -106,7 +110,7 @@ Deno.serve(async (req) => {
     if (!subRow?.subscription) {
       // Nobody to notify (push never enabled, or subscription already gone) —
       // stamp anyway so this word doesn't get re-evaluated every minute forever.
-      await stamp(ids);
+      await stamp(words);
       continue;
     }
 
@@ -125,7 +129,7 @@ Deno.serve(async (req) => {
     try {
       await webpush.sendNotification(subRow.subscription, JSON.stringify(payload));
       usersNotified++;
-      await stamp(ids);
+      await stamp(words);
     } catch (err) {
       const statusCode = (err as { statusCode?: number })?.statusCode;
       console.error(`push failed for user ${userId} (status ${statusCode}):`, err);
@@ -133,7 +137,7 @@ Deno.serve(async (req) => {
         // Browser revoked this subscription — remove it and stamp so we stop retrying.
         await supabase.from('push_subscriptions').delete().eq('user_id', userId);
         removedSubscriptions++;
-        await stamp(ids);
+        await stamp(words);
       }
       // Other errors (e.g. transient network issues): leave unstamped so the
       // next run retries automatically.
