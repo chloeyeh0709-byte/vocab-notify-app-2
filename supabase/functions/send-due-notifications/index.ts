@@ -38,13 +38,12 @@ interface ScheduleRow {
   last_notified_for: string | null;
 }
 
-// Small batches get one notification per word — each names its translation and
-// deep-links to that word. Larger batches collapse into a single summary
-// (naming up to this many) so the user isn't hit with a notification storm.
-const MAX_INDIVIDUAL = 5;
+// Multiple words due at once: name them (capped, so the notification stays
+// readable) instead of just printing a count.
+const MAX_NAMES_IN_BODY = 5;
 function formatDueBody(words: ScheduleRow[]): string {
-  const names = words.slice(0, MAX_INDIVIDUAL).map((w) => w.english).join('、');
-  return words.length > MAX_INDIVIDUAL ? `${names}…等 ${words.length} 個單字` : names;
+  const names = words.slice(0, MAX_NAMES_IN_BODY).map((w) => w.english).join('、');
+  return words.length > MAX_NAMES_IN_BODY ? `${names}…等 ${words.length} 個單字` : names;
 }
 
 Deno.serve(async (req) => {
@@ -111,22 +110,20 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    const payloads = words.length <= MAX_INDIVIDUAL
-      ? words.map((w) => ({
+    const payload = words.length === 1
+      ? {
           title: '📚 該複習了',
-          body: `${w.english} — ${w.chinese}`,
-          data: { type: 'review_word', wordId: w.id },
-        }))
-      : [{
+          body: `${words[0].english} — ${words[0].chinese}`,
+          data: { type: 'review_word', wordId: words[0].id },
+        }
+      : {
           title: '📚 該複習了',
           body: formatDueBody(words),
           data: { type: 'review_due' },
-        }];
+        };
 
     try {
-      for (const payload of payloads) {
-        await webpush.sendNotification(subRow.subscription, JSON.stringify(payload));
-      }
+      await webpush.sendNotification(subRow.subscription, JSON.stringify(payload));
       usersNotified++;
       await stamp(ids);
     } catch (err) {
